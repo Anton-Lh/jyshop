@@ -3,7 +3,7 @@
     <div>
       <el-row :gutter="20">
         <el-col :span="4">
-          <el-input v-model="user_name" placeholder="账号名" clearable />
+          <el-input v-model="user_name" placeholder="用户名" clearable />
         </el-col>
         <el-col :span="16">
           <el-button type="primary" @click="getSearchList">搜索</el-button>
@@ -13,8 +13,8 @@
     </div>
         <div id="borders">
         <el-table :data="userList" border style="width: 100%;margin-top:20px;" >
-            <el-table-column property="UserName" label="账户名" ></el-table-column>
-            <el-table-column label="账户类型">
+            <el-table-column property="UserName" label="用户名" ></el-table-column>
+            <el-table-column label="角色">
                 <template slot-scope="scope">
                     <span v-if="scope.row.Type == '0'">超级管理员</span>
                     <span v-else-if="scope.row.Type == '1'">总公司</span>
@@ -22,10 +22,16 @@
                     <span v-else-if="scope.row.Type == '3'">老师</span>
                 </template>
             </el-table-column>
-            <el-table-column label="是否直播">
+            <el-table-column label="名字">
                 <template slot-scope="scope">
                     <el-tag v-if="scope.row.LiveState == '0'" type="danger">关闭</el-tag>
                     <el-tag v-else type="success">开启</el-tag>
+                </template>
+            </el-table-column>
+             <el-table-column label="状态">
+                <template slot-scope="scope" >
+                    <el-tag v-if="scope.row.LiveState == '0'"  >正常</el-tag>
+                    <el-tag  v-else >失效</el-tag>
                 </template>
             </el-table-column>
             <el-table-column property="AddTimeStr" label="加入时间"></el-table-column>

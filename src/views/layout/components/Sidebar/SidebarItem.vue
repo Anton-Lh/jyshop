@@ -1,4 +1,5 @@
 <template>
+
   <div v-if="!item.hidden" class="menu-wrapper">
 
     <template v-if="hasOneShowingChild(item.children,item) && (!onlyOneChild.children||onlyOneChild.noShowingChildren)&&!item.alwaysShow">
@@ -7,8 +8,9 @@
           <item :meta="Object.assign({},item.meta,onlyOneChild.meta)" />
         </el-menu-item>
       </app-link>
+      
     </template>
-
+    
     <el-submenu v-else ref="subMenu" :index="resolvePath(item.path)" popper-append-to-body>
       <template slot="title">
         <item :meta="item.meta" />

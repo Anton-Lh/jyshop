@@ -11,6 +11,13 @@ import '@/styles/index.scss' // global css
 import App from './App'
 import store from './store'
 import router from './router'
+//富文本编辑器
+import quillEditor from "vue-quill-editor";
+import "quill/dist/quill.core.css";
+import "quill/dist/quill.snow.css";
+import "quill/dist/quill.bubble.css";
+Vue.use(quillEditor);
+
 
 import '@/icons' // icon
 import '@/permission' // permission control
@@ -30,8 +37,8 @@ Vue.use(ElementUI, { locale })
 Vue.config.productionTip = false
 
 new Vue({
-  el: '#app',
-  router,
-  store,
-  render: h => h(App)
+    el: '#app',
+    router,
+    store,
+    render: h => h(App)
 })

@@ -23,54 +23,108 @@ import Layout from '../views/layout/Layout'
   }
 **/
 export const constantRouterMap = [
-  { path: '/login', component: () => import('@/views/login/index'), hidden: true },
-  { path: '/404', component: () => import('@/views/404'), hidden: true },
+    { path: '/login', component: () => import('@/views/login/index'), hidden: true },
+    { path: '/404', component: () => import('@/views/404'), hidden: true },
 
-  {
-    path: '/',
-    component: Layout,
-    redirect: '/dashboard',
-    name: 'Dashboard',
-    hidden: true,
-    children: [{
-      path: 'dashboard',
-      component: () => import('@/views/dashboard/index')
-    }]
-  },
+    {
+        path: '/',
+        component: Layout,
+        redirect: '/dashboard',
+        name: 'Dashboard',
+        hidden: true,
+        children: [{
+            path: 'dashboard',
+            component: () => import('@/views/dashboard/index')
+        }]
+    },
 
-  
-  {
-    path: '/user',
-    component: Layout,
-    children: [
-      {
-        path: 'userList',
-        name: '账号管理',
-        component: () => import('@/views/user/userList'),
-        meta: { title: '账号管理', icon: '用户管理' }
-      }
-    ]
-  },
-  // {
-  //   path: '/user',
-  //   component: Layout,
-  //   name: 'User',
-  //   meta: { title: '系统管理', icon: 'example' },
-  //   children: [
-  //     {
-  //       path: 'userList',
-  //       name: '账号列表',
-  //       component: () => import('@/views/user/userList'),
-  //       meta: { title: '账号列表', icon: 'table' }
-  //     }
-  //   ]
-  // },
 
-  { path: '*', redirect: '/404', hidden: true }
+    {
+        path: '/user',
+        component: Layout,
+        children: [
+            {
+                path: 'userList',
+                name: '账号管理',
+                component: () => import('@/views/user/userList'),
+                meta: { title: '账号管理', icon: '用户管理' }
+            }
+        ]
+    },
+    {
+        path: '/coupons',
+        component: Layout,
+        meta: { title: '卡券管理', icon: '用户管理' },
+        children: [
+            {
+                path: 'coupons_list',
+                name: '卡券管理',
+                component: () => import('@/views/coupons/coupons_list'),
+                meta: { title: '卡券列表', icon: '用户管理' }
+            },
+        ]
+    },
+    {
+        path: '/customer',
+        component: Layout,
+        meta: { title: '客户管理', icon: '用户管理' },
+        children: [
+            {
+                path: 'customer_list',
+                name: '客户管理',
+                component: () => import('@/views/customer/customer_list'),
+                meta: { title: '客户管理', icon: '用户管理' }
+            },
+        ]
+    },
+    {
+        path: '/commoditymanagement',
+        component: Layout,
+        meta: { title: '商品管理', icon: '用户管理' },
+        children: [
+            {
+                path: 'commoditymanagement',
+                name: '商品管理',
+                component: () => import('@/views/commoditymanagement/commodity_list'),
+                meta: { title: '商品管理', icon: '用户管理' }
+            },
+        ]
+    },
+
+    {
+        path: '/bckgroundmap',
+        component: Layout,
+        meta: { title: '背景图管理', icon: '用户管理' },
+        children: [
+            {
+                path: 'bckgroundmap',
+                name: '背景图管理',
+                component: () => import('@/views/bckgroundmap/bckgroundmap'),
+                meta: { title: '背景图管理', icon: '用户管理' }
+            },
+        ]
+    },
+
+    // {
+    //   path: '/user',
+    //   component: Layout,
+    //   name: 'User',
+    //   meta: { title: '系统管理', icon: 'example' },
+    //   children: [
+    //     {
+    //       path: 'userList',
+    //       name: '账号列表',
+    //       component: () => import('@/views/user/userList'),
+    //       meta: { title: '账号列表', icon: 'table' }
+    //     }
+    //   ]
+    // },
+
+    { path: '*', redirect: '/404', hidden: true }
 ]
 
 export default new Router({
-  // mode: 'history', //后端支持可开
-  scrollBehavior: () => ({ y: 0 }),
-  routes: constantRouterMap
+    // mode: 'history', //后端支持可开
+    scrollBehavior: () => ({ y: 0 }),
+    routes: constantRouterMap
 })
