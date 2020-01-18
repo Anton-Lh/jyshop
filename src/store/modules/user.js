@@ -1,6 +1,16 @@
-import { login, logout, getUserInfo } from '@/api/login'
-import { getToken, setToken, removeToken } from '@/utils/auth'
-import { Message } from 'element-ui'
+import {
+  login,
+  logout,
+  getUserInfo
+} from '@/api/login'
+import {
+  getToken,
+  setToken,
+  removeToken
+} from '@/utils/auth'
+import {
+  Message
+} from 'element-ui'
 
 const user = {
   state: {
@@ -31,8 +41,39 @@ const user = {
   },
 
   actions: {
+    // 用户名登录
+    LoginByUsername({
+      commit
+    }, userInfo) {
+      const username = userInfo.user_name.trim()
+      return new Promise((resolve, reject) => {
+        loginByUsername(username, userInfo.password).then(response => {
+          const data = response.data
+          if (data.Result) {
+            commit('SET_TOKEN', data.Data.token)
+            setToken(data.Data.token)
+            resolve(data)
+          } else {
+            reject(data)
+          }
+        }).catch(e => {
+          console.log('store LoginByUsername', e)
+          console.log(e instanceof SyntaxError) // true
+          console.log(e.message) // "missing ; before statement"
+          console.log(e.name) // "SyntaxError"
+          console.log(e.fileName) // "Scratchpad/1"
+          console.log(e.lineNumber) // 1
+          console.log(e.columnNumber) // 4
+          console.log(e.stack) // "@Scratchpad/1:2:3\n"
+          reject(e)
+        })
+      })
+    },
+
     // 登录
-    Login({ commit }, userInfo) {
+    Login({
+      commit
+    }, userInfo) {
       const username = userInfo.username.trim()
       return new Promise((resolve, reject) => {
         login(username, userInfo.password).then(response => {
@@ -53,7 +94,10 @@ const user = {
     },
 
     // 获取用户信息
-    GetInfo({ commit, state }) {
+    GetInfo({
+      commit,
+      state
+    }) {
       return new Promise((resolve, reject) => {
         getUserInfo(state.token).then(response => {
           console.log('GetInfo')
@@ -73,7 +117,10 @@ const user = {
     },
 
     // 登出
-    LogOut({ commit, state }) {
+    LogOut({
+      commit,
+      state
+    }) {
       return new Promise((resolve, reject) => {
         logout(state.token).then(() => {
           commit('SET_TOKEN', '')
@@ -87,7 +134,9 @@ const user = {
     },
 
     // 前端 登出
-    FedLogOut({ commit }) {
+    FedLogOut({
+      commit
+    }) {
       return new Promise(resolve => {
         commit('SET_TOKEN', '')
         removeToken()

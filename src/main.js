@@ -33,6 +33,22 @@ import '@/permission' // permission control
 import '../mock' // simulation data
 
 Vue.use(ElementUI, { locale })
+Vue.directive('enterNumber', {
+    inserted: function (el) {
+        el.addEventListener("keypress", function (e) {
+            e = e || window.event;
+            let charcode = typeof e.charCode == 'number' ? e.charCode : e.keyCode;
+            let re = /\d/;
+            if (!re.test(String.fromCharCode(charcode)) && charcode != 0 && charcode > 9 && !e.ctrlKey) {
+                if (e.preventDefault) {
+                    e.preventDefault();
+                } else {
+                    e.returnValue = false;
+                }
+            }
+        });
+    }
+});
 
 Vue.config.productionTip = false
 

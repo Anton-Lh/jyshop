@@ -1,36 +1,31 @@
 import request from '@/utils/request'
 
-export function getUserListApi (data) {
+export function getbgimg (data) {
     return request({
-        url: 'api/User/GetList',
+        url: '/api/Bgimg/GetList',
         method: 'post',
         data
     })
 }
-
-export function updateLiveStateApi (data) {
+export function addbgimg (data) {
     return request({
-        url: 'api/User/UpdateLiveState',
+        url: '/api/Bgimg/Add',
         method: 'post',
         data
     })
 }
-
-export function deleteApi (data) {
+export function updatebgimg (data) {
     return request({
-        url: 'api/User/Delete',
+        url: '/api/Bgimg/Update',
         method: 'post',
         data
     })
 }
-
-export function addApi (data) {
+export function delbgimg (data) {
     return request({
-        url: 'api/User/Add',
+        url: '/api/Bgimg/Delete',
         method: 'post',
         data
     })
 }
-
-
 

@@ -1,8 +1,8 @@
-import store from '../store'
+import store from "../store";
 
 /*富文本编辑图片上传配置*/
 const uploadConfig = {
-    action: '/api/upload/picture',  // 必填参数 图片上传地址
+    action:  process.env.BASE_API  +  '/api/Goods/Picture',  // 必填参数 图片上传地址
     methods: 'POST',  // 必填参数 图片上传方式
     token: store.getters.token,  // 可选参数 如果需要token验证，假设你的token有存放在sessionStorage
     name: 'picture',  // 必填参数 文件的参数名
@@ -28,8 +28,8 @@ const toolOptions = [
 ];
 const handlers = {
     image: function image () {
+        console.log(`进来了`)
         var self = this;
-
         var fileInput = this.container.querySelector('input.ql-image[type=file]');
         if (fileInput === null) {
             fileInput = document.createElement('input');
@@ -59,7 +59,7 @@ const handlers = {
                         var res = JSON.parse(xhr.responseText);
                         let length = self.quill.getSelection(true).index;
                         //这里很重要，你图片上传成功后，img的src需要在这里添加，res.path就是你服务器返回的图片链接。            
-                        self.quill.insertEmbed(length, 'image', res.data.file_path);
+                        self.quill.insertEmbed(length, 'image', process.env.BASE_API  +  res.file_path);
                         self.quill.setSelection(length + 1)
                     }
                     fileInput.value = ''

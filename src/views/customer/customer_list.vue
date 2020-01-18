@@ -6,12 +6,17 @@
             <span>状态:</span>
             <el-select v-model="search.status"
                        placeholder="请选择">
-                <el-option v-for="item in base_status"
+                <el-option v-for="item in options"
                            :key="item.key"
-                           :label="item.value"
-                           :value="item.key">
+                           :label="item.label"
+                           :value="item.value">
                 </el-option>
             </el-select>
+            <span>名称:</span>
+
+            <el-input placeholder="请输入名称"
+                      style="width:200px"
+                      v-model.trim="search.name"></el-input>
 
             <div class="button-block"
                  style="display: inline-block;margin-left: 30px;">
@@ -25,7 +30,6 @@
                            size="medium"
                            @click="newAddassets_show=true">新增客户</el-button>
             </div>
-
         </div>
         <el-dialog title="客户新增"
                    :close-on-click-modal="false"
@@ -44,13 +48,13 @@
                 </el-form-item>
                 <el-form-item label="客户数量"
                               prop="number">
-                    <el-input placeholder="请输入数量"
-                              type="number"
-                              v-model.trim="ruleForm.number"></el-input>
+                    <el-input v-model.number.trim="ruleForm.number"
+                              v-enter-number></el-input>
+                    <!-- <el-input placeholder="请输入数量"
+                              v-enter-number
+                              v-model.number="ruleForm.number"></el-input> -->
                 </el-form-item>
             </el-form>
-
-            </el-table>
 
             <div slot="footer"
                  class="dialog-footer">
@@ -68,8 +72,7 @@
                   style="width: 100%"
                   stripe
                   :header-cell-style="{textAlign:'center',background: '#f5f5f5',height: '40px',color:'#555555'} "
-                  :cell-style="{textAlign: 'center'}"
-                  @row-click="handleNum">
+                  :cell-style="{textAlign: 'center'}">
             <el-table-column prop="name"
                              label="客户名称">
             </el-table-column>
@@ -86,15 +89,17 @@
                     <span v-else>已兑换</span>
                 </template>
             </el-table-column>
-            <el-table-column prop="account"
-                             label="收货地址">
-            </el-table-column>
             <el-table-column prop="addtime"
                              label="注册时间">
             </el-table-column>
+            <el-table-column label="操作">
+                <template slot-scope="scope">
+                    <span @click="handleNum(scope.row)">删除</span>
+                </template>
+            </el-table-column>
 
         </el-table>
-        <!-- <div class="pagination-container">
+        <div class="pagination-container">
             <el-pagination :current-page="curPage"
                            @size-change="handleSizeChange"
                            @current-change="handleCurrentChange"
@@ -103,23 +108,20 @@
                            layout="total, sizes, prev, pager, next, jumper"
                            :total="total">
             </el-pagination>
-        </div> -->
+        </div>
     </div>
 </template>
 <script>
 // 时间戳过滤
 import moment from 'moment'
-import { getList, addList } from '@/api/user'
-
+import { getList, addList, delList } from '@/api/customer'
 export default {
     name: 'assetManagement',
-
     data () {
         return {
             curPage: 1,
             page_size: 20,
             total: 0,
-            base_status: [],
             tableData: [],
             dialogImageUrl: '',
             ruleForm: {
@@ -134,18 +136,18 @@ export default {
                     { required: true, message: '数量不可以为空', trigger: 'blur' }
                 ],
             },
-            dialogVisible_pic: false,
             options: [{
-                value: '1',
-                label: '已确认'
+                value: 0,
+                label: '未兑换'
             }, {
-                value: '2',
-                label: '待确认'
+                value: 1,
+                label: '已兑换'
             }],
             rowData: {},
             newAddassets_show: false,
             search: {
                 status: '',
+                name: ''
             }
         }
     },
@@ -161,91 +163,66 @@ export default {
     },
     created () {
         this.getInfo()
-        // this.getInt()
     },
     methods: {
-        getInt () {
 
-        },
         getInfo () {
-            let params = {
-                page: this.curPage,
-                page_size: this.page_siz,
-                total: this.total,
-                name: this.search.name,
-                // 判断当前搜索时间数组长度
-            }
-            getList(params).then(res => {
-                if (res.status == 200) {
-                    this.tableData = res.data.Data
-                    console.log(`成功数据`, res.data)
-
-                }
+            return new Promise((resolve, reject) => {
+                getList({
+                    page_index: this.curPage,
+                    page_size: this.page_size,
+                    name: this.search.name,
+                    status: this.search.status
+                })
+                    .then(res => {
+                        const data = res.data;
+                        if (data.Result) {
+                            this.tableData = res.data.Data;
+                            this.total = res.data.PageInfo.TotalCount;
+                        }
+                    })
+                    .catch(error => {
+                        reject(error);
+                    });
             })
-            // getassetslist(params).then(res => {
-            //     if (res.error == 0) {
-            //         console.log(`列表`, res)
-            //         this.tableData = res.data.data
-            //         this.permission_button = res.data.permission_button
-            //         this.total = res.data.total
-            //     }
-
-            // })
         },
-
         resetSearchForm () {
             this.search = {
                 status: '',
+                name: ''
             }
             this.curPage = 1
             this.getInfo();
         },
-        handeltype (val) {
-            console.log(val)
-        },
-
         submitNewassets (formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    let data = {
+                    let params = {
                         name: this.ruleForm.name,
                         number: this.ruleForm.number,
 
                     }
-                    console.log(`data`, data)
-                    addList(data).then(res => {
-                        if (res.status == 200) {
-                            console.log('成功的数据', res)
-                            this.newAddassets_show = false
-                            this.getInfo();
-                        }
+                    console.log(`data`, params)
+                    return new Promise((resolve, reject) => {
+                        addList(params)
+                            .then(res => {
+                                const data = res.data;
+                                if (data.Result) {
+                                    console.log('成功的数据', res)
+                                    this.newAddassets_show = false
+                                    this.getInfo();
+                                }
+                            })
+                            .catch(error => {
+                                reject(error);
+                            });
                     })
-                    // putsubmitWarehousing({ id: this.rowData.id, data }).then(res => {
-                    //     if (res.error == 0) {
-                    //         console.log(res)
-                    //         this.getInfo()
-                    //         this.newAddassets_show = false
-                    //     }
-                    // })
-
-
                 } else {
                     console.log('error submit!!');
                     return false;
                 }
             });
-            // let _flag = false
-            // this.ruleForm.name.forEach(item => {
-            //     if (item.username == "") {
-            //         this.$message.closeAll()
-            //         this.$message.warning('客户名称不能为空')
-            //         _flag = true
-            //     }
 
-            // })
-            // if (!_flag) {
-            //     console.log(this.ruleForm.name)
-            // }
         },
 
         // 每页显示条数操作
@@ -269,10 +246,30 @@ export default {
         },
 
         handleNum (row) {
-            this.rowData = {};
-            console.log(`111`, row)
-            // let params = row.id
-            // console.log("查看接单状态", this.rowData.shipment_info);
+            this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                return new Promise((resolve, reject) => {
+                    delList(row)
+                        .then(res => {
+                            const data = res.data
+                            if (data.Result) {
+                                this.getInfo();
+                                this.$message.success(data.Message)
+                            } else {
+                                this.$message.error(data.Message)
+                            }
+                            resolve()
+                        })
+                        .catch(error => {
+                            reject(error)
+                        })
+                })
+            }).catch(() => {
+                return
+            })
         }
     }
 }

@@ -11,7 +11,7 @@
                  style="display: inline-block;margin-left: 30px;">
                 <el-button type="primary"
                            size="medium"
-                           @click="curPage=1;getInfo ()">搜索</el-button>
+                           @click="curPage=1;getInfo()">搜索</el-button>
                 <el-button type="info"
                            size="medium"
                            @click="resetSearchForm()">重置</el-button>
@@ -32,34 +32,29 @@
                      label-width="100px"
                      class="demo-ruleForm">
                 <el-form-item label="商品名称"
-                              prop="pic_name">
+                              prop="goods_name">
                     <el-input placeholder="请输入名称"
-                              v-model.trim="ruleForm.pic_name"></el-input>
+                              v-model.trim="ruleForm.goods_name"></el-input>
                 </el-form-item>
                 <el-form-item label="单位"
-                              prop="company">
+                              prop="goods_unit">
                     <el-input placeholder="请输入单位"
-                              v-model.trim="ruleForm.company"></el-input>
+                              v-model.trim="ruleForm.goods_unit"></el-input>
                 </el-form-item>
                 <el-form-item label="库存数量"
-                              prop="stock">
+                              prop="stock_number">
                     <el-input placeholder="请输入库存数量"
                               type="number"
-                              v-model.trim="ruleForm.stock"></el-input>
+                              v-model.trim="ruleForm.stock_number"></el-input>
                 </el-form-item>
-                <el-form-item label="商品价格"
-                              prop="price">
-                    <el-input placeholder="请输入价格"
-                              type="number"
-                              v-model.trim="ruleForm.price"></el-input>
-                </el-form-item>
+                <!-- 添加个状态开关 -->
+
                 <el-form-item label="商品轮播">
                     <div class="imgBox2">
                         <el-upload class="avatar-uploader"
-                                   action="https://api.doudot.cn/api/Attachment/upload"
+                                   :action="uploadUrl"
                                    list-type="picture-card"
                                    :limit="6"
-                                   :data="fileData"
                                    :file-list="fileList"
                                    :on-success="handleAvatarSuccess"
                                    :before-upload="beforeAvatarUpload"
@@ -67,20 +62,23 @@
                                    :on-remove="handleRemove">
                             <i class="el-icon-plus"></i>
                         </el-upload>
-                        <span>最多上传6张(建议尺寸325*325)</span>
+                        <span c>最多上传6张(建议尺寸325*325)</span>
 
                     </div>
                 </el-form-item>
-                <el-form-item label="详情:"
-                              prop="content">
+                <el-form-item label="简介:"
+                              style="width: 100%;padding-top: 20px;"
+                              prop="goods_introduce">
 
-                    <quill-editor v-model="ruleForm.content"
-                                  ref="QuillEditor"
-                                  :options="quillOption"
-                                  @blur="onEditorBlur($event)"
-                                  @focus="onEditorFocus($event)"
-                                  @change="onEditorChange($event)">
-                    </quill-editor>
+                    <div class="quill_content">
+                        <quill-editor v-model="ruleForm.goods_introduce"
+                                      ref="QuillEditor"
+                                      :options="quillOption"
+                                      @blur="onEditorBlur($event)"
+                                      @focus="onEditorFocus($event)"
+                                      @change="onEditorChange($event)">
+                        </quill-editor>
+                    </div>
                 </el-form-item>
             </el-form>
             <el-dialog :visible.sync="dialogVisible">
@@ -106,19 +104,25 @@
                   :header-cell-style="{textAlign:'center',background: '#f5f5f5',height: '40px',color:'#555555'} "
                   :cell-style="{textAlign: 'center'}"
                   @row-click="handleNum">
-            <el-table-column prop="name"
+            <el-table-column type="index"
                              label="序号">
             </el-table-column>
-            <el-table-column prop="account"
-                             label="背景图名称">
+            <el-table-column prop="goods_name"
+                             label="商品名称">
+            </el-table-column>
+            <el-table-column prop="goods_unit"
+                             label="商品单位">
+            </el-table-column>
+            <el-table-column prop="stock_number"
+                             label="商品数量">
             </el-table-column>
             <el-table-column prop="password"
-                             label="缩略图">
+                             label="商品简介">
             </el-table-column>
-            <el-table-column prop="status"
+            <el-table-column prop="goods_status"
                              label="状态">
             </el-table-column>
-            <el-table-column prop="创建时间"
+            <el-table-column prop="addtimeStr"
                              label="注册时间">
             </el-table-column>
             <!-- @click="edit(scope.$index, scope.row)" -->
@@ -129,7 +133,7 @@
                 </template>
             </el-table-column>
         </el-table>
-        <!-- <div class="pagination-container">
+        <div class="pagination-container">
             <el-pagination :current-page="curPage"
                            @size-change="handleSizeChange"
                            @current-change="handleCurrentChange"
@@ -138,15 +142,16 @@
                            layout="total, sizes, prev, pager, next, jumper"
                            :total="total">
             </el-pagination>
-        </div> -->
+        </div>
     </div>
 </template>
 <script>
 // 时间戳过滤
 import moment from 'moment'
-import { getList } from '@/api/user'
+import { getList, deletePollPicture } from "@/api/goods";
 import { quillEditor } from "vue-quill-editor"
-import { quillConfig } from '@/utils/quill-config'
+import quillConfig from '@/utils/quill-config.js'
+
 export default {
     name: 'assetManagement',
     components: {
@@ -157,51 +162,37 @@ export default {
             curPage: 1,
             page_size: 20,
             total: 0,
-            base_status: [],
             tableData: [],
             dialogImageUrl: '',
             fileList: [],
             quillOption: quillConfig,
-            fileData: {
-                category: "make"
-            },
             dialogVisible: false,
             ruleForm: {
-                stock: '',
-                Company: '',
-                pic_name: '',
-                price: '',
-                content: '',
-                homepiclist: []
+                goods_name: '',
+                goods_unit: '',
+                goods_introduce: '',
+                stock_number: 0,
+                goods_status: 0,
+                goods_poll_img: ''
             },
+            alreadyFileList: [],
+            uploadUrl: process.env.BASE_API + "/api/Goods/PollPicture",
             rules: {
-                company: [
-                    { required: true, message: '请输入单位规格', trigger: 'blur' }
+                goods_name: [
+                    { required: true, message: '请输入商品名称', trigger: 'blur' }
                 ],
-                stock: [
+                stock_number: [
                     { required: true, message: '请输入库存数量', trigger: 'blur' }
                 ],
-                pic_name: [
-                    { required: true, message: '名称不可为空', trigger: 'blur' }
+                goods_unit: [
+                    { required: true, message: '请输入商品单位', trigger: 'blur' }
                 ],
-                homepiclist: [
-                    { required: true, message: '请先上传首页轮播图', trigger: 'blur' }
-                ],
-                price: [
-                    { required: true, message: '请输入商品价格', trigger: 'blur' }
-                ],
-                content: [
-                    { required: true, message: '请输入详情', trigger: 'blur' }
+                goods_introduce: [
+                    { required: true, message: '请输入商品简介', trigger: 'blur' }
                 ]
             },
             dialogVisible_pic: false,
-            options: [{
-                value: '1',
-                label: '已确认'
-            }, {
-                value: '2',
-                label: '待确认'
-            }],
+
             rowData: {},
             newAddassets_show: false,
             search: {
@@ -221,81 +212,43 @@ export default {
     },
     created () {
         this.getInfo()
-        // this.getInt()
     },
     methods: {
-        getInt () {
-
-        },
         getInfo () {
-            let params = {
-                page: this.curPage,
-                page_size: this.page_siz,
-                total: this.total,
-                name: this.search.name,
-                // 判断当前搜索时间数组长度
-            }
-            getList(params).then(res => {
-                if (res.status == 200) {
-                    this.tableData = res.data.Data
-                    console.log(`成功数据`, this.tableData)
-
-                }
+            return new Promise((resolve, reject) => {
+                getList({
+                    page_index: this.curPage,
+                    page_size: this.page_size,
+                    goods_name: this.search.name,
+                }).then(res => {
+                    const data = res.data;
+                    if (data.Result) {
+                        this.tableData = res.data.Data;
+                        this.total = res.data.PageInfo.TotalCount;
+                    }
+                }).catch(error => {
+                    reject(error);
+                });
             })
-            // getassetslist(params).then(res => {
-            //     if (res.error == 0) {
-            //         console.log(`列表`, res)
-            //         this.tableData = res.data.data
-            //         this.permission_button = res.data.permission_button
-            //         this.total = res.data.total
-            //     }
-
-            // })
         },
 
         resetSearchForm () {
-            this.search = {
-                status: '',
-            }
+            this.search.name = ''
             this.curPage = 1
             this.getInfo();
         },
-        handeltype (val) {
-            console.log(val)
-        },
-
         submitNewassets (formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
                     let data = this.ruleForm
                     console.log(`data`, data)
 
-                    // putsubmitWarehousing({ id: this.rowData.id, data }).then(res => {
-                    //     if (res.error == 0) {
-                    //         console.log(res)
-                    //         this.getInfo()
-                    //         this.newAddassets_show = false
-                    //     }
-                    // })
-
-
                 } else {
                     console.log('error submit!!');
                     return false;
                 }
             });
-            // let _flag = false
-            // this.ruleForm.name.forEach(item => {
-            //     if (item.username == "") {
-            //         this.$message.closeAll()
-            //         this.$message.warning('客户名称不能为空')
-            //         _flag = true
-            //     }
 
-            // })
-            // if (!_flag) {
-            //     console.log(this.ruleForm.name)
-            // }
         },
 
         // 每页显示条数操作
@@ -315,25 +268,16 @@ export default {
             this.$refs[formName].resetFields();
             this.hideUpload = false
             this.fileList = []
-            this.ruleForm = {
-                homepic: '',
-                homepiclist: []
-            }
             this.rowData = {}
         },
 
         handleNum (row) {
             this.rowData = {};
-            console.log(`111`, row)
-            // let params = row.id
-            // console.log("查看接单状态", this.rowData.shipment_info);
         },
         // 上传图片
-
         handleAvatarSuccess (res, file) {
-            console.log(`成功`, res)
+            this.alreadyFileList.push({ uid: file.uid, path: res });
             this.imageUrl = URL.createObjectURL(file.raw);
-            // this.ruleForm.homepic = res.data.file_path;
         },
         beforeAvatarUpload (file) {
             const isJPG = file.type === 'image/jpeg';
@@ -348,7 +292,20 @@ export default {
             return (isJPG || isPNG) && isLt5M;
         },
         handleRemove (file, fileList) {
-            console.log(file, fileList);
+            for (var i = 0; i < this.alreadyFileList.length; i++) {
+                if (this.alreadyFileList[i].uid == file.uid) {
+                    let pram = this.alreadyFileList[i].path;
+                    //相同uid时，删除服务器中对应的图片
+                    return new Promise((resolve, reject) => {
+                        deletePollPicture({ file: pram }).then(res => {
+                            this.$message.success("删除成功");
+                            resolve(res);
+                        }).catch(error => {
+                            reject(error);
+                        });
+                    });
+                }
+            }
         },
         handlePictureCardPreview (file) {
             this.dialogImageUrl = file.url;
@@ -513,6 +470,9 @@ export default {
 }
 
 // 富文本
+.quill_content {
+  width: 670px;
+}
 /deep/.ql-snow .ql-picker {
   height: 100%;
 }

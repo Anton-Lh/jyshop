@@ -39,41 +39,22 @@
                 <el-form-item label="首页背景"
                               prop="homepic">
                     <div class="imgBox">
-                        <el-upload class="avatar-uploader"
-                                   action="https://api.doudot.cn/api/Attachment/upload"
-                                   list-type="picture-card"
+                        <el-upload action=''
+                                   :on-change="getFile"
                                    :limit="1"
-                                   :data="fileData"
-                                   :file-list="fileList"
-                                   :on-success="handleAvatarSuccess"
+                                   :fileList="ruleForm.fileList"
                                    :before-upload="beforeAvatarUpload"
                                    :on-preview="handlePictureCardPreview"
-                                   :on-remove="handleRemove">
+                                   :on-remove="handleRemove"
+                                   list-type="picture-card"
+                                   :auto-upload="false">
                             <i class="el-icon-plus"></i>
                         </el-upload>
+
                         <span>(建议尺寸325*640)</span>
                     </div>
                 </el-form-item>
-                <el-form-item label="首页轮播"
-                              prop="homepiclist">
 
-                    <div class="imgBox2">
-                        <el-upload class="avatar-uploader"
-                                   action="https://api.doudot.cn/api/Attachment/upload"
-                                   list-type="picture-card"
-                                   :limit="6"
-                                   :data="fileData"
-                                   :file-list="fileList"
-                                   :on-success="handleAvatarSuccess"
-                                   :before-upload="beforeAvatarUpload"
-                                   :on-preview="handlePictureCardPreview"
-                                   :on-remove="handleRemove">
-                            <i class="el-icon-plus"></i>
-                        </el-upload>
-                        <span>最多上传6张(建议尺寸325*325)</span>
-
-                    </div>
-                </el-form-item>
             </el-form>
             <el-dialog :visible.sync="dialogVisible">
                 <img width="100%"
@@ -82,11 +63,14 @@
             </el-dialog>
             <div slot="footer"
                  class="dialog-footer">
-                <span>
+                <span v-if="bgstatus==0">
                     <el-button type="primary"
-                               @click="submitNewassets">确定</el-button>
+                               @click="submitNewassets('ruleForm')">确定</el-button>
                 </span>
-
+                <span v-else>
+                    <el-button type="primary"
+                               @click="submitEdit('ruleForm')">编辑</el-button>
+                </span>
                 <el-button style="display:inline-block;margin-left:10px"
                            @click="newAddassets_show=false">取消</el-button>
             </div>
@@ -96,32 +80,41 @@
                   style="width: 100%"
                   stripe
                   :header-cell-style="{textAlign:'center',background: '#f5f5f5',height: '40px',color:'#555555'} "
-                  :cell-style="{textAlign: 'center'}"
-                  @row-click="handleNum">
-            <el-table-column prop="name"
+                  :cell-style="{textAlign: 'center'}">
+            <el-table-column prop="id"
                              label="序号">
             </el-table-column>
-            <el-table-column prop="account"
+            <el-table-column prop="bg_name"
                              label="背景图名称">
             </el-table-column>
-            <el-table-column prop="password"
-                             label="缩略图">
-            </el-table-column>
-            <el-table-column prop="status"
-                             label="状态">
-            </el-table-column>
-            <el-table-column prop="创建时间"
-                             label="注册时间">
+            <el-table-column width="60"
+                             height="60"
+                             label="图片">
+                <template slot-scope="scope">
+                    <el-popover placement="right"
+                                :open-delay="300"
+                                transition="fade-in-linear"
+                                trigger="hover"
+                                v-if="scope.row.bg_images_url"
+                                style="text-align:center">
+                        <div style="width:150px;height:150px;display:flex; align-items: center;justify-content: center">
+                            <img :src="process+scope.row.bg_images_url"
+                                 style="width:120px;height:120px">
+                        </div>
+                        <span slot="reference"><img style="width:40px;height:40px"
+                                 :src="process+scope.row.bg_images_url"></span>
+                    </el-popover>
+                </template>
             </el-table-column>
             <!-- @click="edit(scope.$index, scope.row)" -->
             <el-table-column label="操作">
                 <template slot-scope="scope">
-                    <span>编辑</span>
-                    <span>删除</span>
+                    <span @click="Editbgimg(scope.row)">编辑</span>
+                    <span @click="Delbgimg(scope.row)">删除</span>
                 </template>
             </el-table-column>
         </el-table>
-        <!-- <div class="pagination-container">
+        <div class="pagination-container">
             <el-pagination :current-page="curPage"
                            @size-change="handleSizeChange"
                            @current-change="handleCurrentChange"
@@ -130,14 +123,13 @@
                            layout="total, sizes, prev, pager, next, jumper"
                            :total="total">
             </el-pagination>
-        </div> -->
+        </div>
     </div>
 </template>
 <script>
 // 时间戳过滤
 import moment from 'moment'
-import { getList } from '@/api/user'
-import { quillConfig } from '@/utils/quill-config'
+import { getbgimg, addbgimg, updatebgimg, delbgimg } from '@/api/backgroundmap'
 export default {
     name: 'assetManagement',
     data () {
@@ -145,18 +137,14 @@ export default {
             curPage: 1,
             page_size: 20,
             total: 0,
-            base_status: [],
             tableData: [],
             dialogImageUrl: '',
-            fileList: [],
-            fileData: {
-                category: "make"
-            },
             dialogVisible: false,
             ruleForm: {
-                homepic: '',
+                homepic: "",
+                bankimg: '',
+                fileList: [],
                 pic_name: '',
-                homepiclist: []
             },
             rules: {
                 homepic: [
@@ -165,20 +153,12 @@ export default {
                 pic_name: [
                     { required: true, message: '名称不可为空', trigger: 'blur' }
                 ],
-                homepiclist: [
-                    { required: true, message: '请先上传首页轮播图', trigger: 'blur' }
-                ],
             },
             dialogVisible_pic: false,
-            options: [{
-                value: '1',
-                label: '已确认'
-            }, {
-                value: '2',
-                label: '待确认'
-            }],
             rowData: {},
+            process: null,
             newAddassets_show: false,
+            bgstatus: 0,
             search: {
                 name: '',
             }
@@ -196,64 +176,117 @@ export default {
     },
     created () {
         this.getInfo()
-        // this.getInt()
     },
     methods: {
-        getInt () {
-
-        },
         getInfo () {
-            let params = {
-                page: this.curPage,
-                page_size: this.page_siz,
-                total: this.total,
-                name: this.search.name,
-                // 判断当前搜索时间数组长度
-            }
-            getList(params).then(res => {
-                if (res.status == 200) {
-                    this.tableData = res.data.Data
-                    console.log(`成功数据`, this.tableData)
-
-                }
+            return new Promise((resolve, reject) => {
+                getbgimg({
+                    page_index: this.curPage,
+                    page_size: this.page_size,
+                    bg_name: this.search.name,
+                }).then(res => {
+                    const data = res.data;
+                    if (data.Result) {
+                        this.process = process.env.BASE_API
+                        this.tableData = res.data.Data;
+                        this.total = res.data.PageInfo.TotalCount;
+                    }
+                }).catch(error => {
+                    reject(error);
+                });
             })
-            // getassetslist(params).then(res => {
-            //     if (res.error == 0) {
-            //         console.log(`列表`, res)
-            //         this.tableData = res.data.data
-            //         this.permission_button = res.data.permission_button
-            //         this.total = res.data.total
-            //     }
-
-            // })
         },
-
         resetSearchForm () {
             this.search = {
-                status: '',
+                name: '',
             }
             this.curPage = 1
             this.getInfo();
         },
-        handeltype (val) {
-            console.log(val)
-        },
-
-        submitNewassets () {
-            let _flag = false
-            this.ruleForm.name.forEach(item => {
-                if (item.username == "") {
-                    this.$message.closeAll()
-                    this.$message.warning('客户名称不能为空')
-                    _flag = true
+        submitNewassets (formName) {
+            this.$refs[formName].validate((valid) => {
+                if (valid) {
+                    let params = {
+                        bg_name: this.ruleForm.pic_name,
+                        bg_images_url: this.ruleForm.homepic,
+                    }
+                    return new Promise((resolve, reject) => {
+                        addbgimg(params).then(res => {
+                            const data = res.data;
+                            if (data.Result) {
+                                this.$message.success('新增成功')
+                                this.newAddassets_show = false
+                                this.getInfo();
+                            }
+                        }).catch(error => {
+                            reject(`失败的`, error);
+                        });
+                    })
+                } else {
+                    console.log('error submit!!');
+                    return false;
                 }
-
-            })
-            if (!_flag) {
-                console.log(this.ruleForm.name)
-            }
+            });
         },
-
+        // 点击编辑
+        Editbgimg (row) {
+            this.rowData = {};
+            this.rowData = row
+            if (this.rowData.bg_images_url != "") {
+                this.bgstatus = 1
+                this.ruleForm.pic_name = this.rowData.bg_name
+                this.ruleForm.homepic = this.rowData.bg_images_url
+                this.ruleForm.fileList = [{ name: this.rowData.bg_name, url: process.env.BASE_API + this.rowData.bg_images_url }]
+            }
+            this.newAddassets_show = true
+        },
+        // 提交编辑
+        submitEdit () {
+            let params = {
+                id: this.rowData.id,
+                bg_name: this.ruleForm.pic_name,
+                bg_images_url: this.ruleForm.homepic,
+            }
+            return new Promise((resolve, reject) => {
+                updatebgimg(params).then(res => {
+                    const data = res.data;
+                    if (data.Result) {
+                        this.$message.success('编辑成功')
+                        this.newAddassets_show = false
+                        this.getInfo();
+                    }
+                }).catch(error => {
+                    reject(`失败的`, error);
+                });
+            })
+        },
+        // 点击删除
+        Delbgimg (row) {
+            this.$confirm('此操作将永久删除该背景图, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                return new Promise((resolve, reject) => {
+                    delbgimg(row)
+                        .then(res => {
+                            const data = res.data
+                            if (data.Result) {
+                                this.getInfo();
+                                this.$message.success(data.Message)
+                            } else {
+                                this.$message.error(data.Message)
+                            }
+                            resolve()
+                        })
+                        .catch(error => {
+                            reject(error)
+                        })
+                })
+            }).catch(() => {
+                return
+            })
+        },
         // 每页显示条数操作
         handleSizeChange (val) {
             this.page_size = val
@@ -270,38 +303,56 @@ export default {
         colse_rule (formName) {
             this.$refs[formName].resetFields();
             this.hideUpload = false
-            this.fileList = []
-            this.ruleForm = {
-                homepic: '',
-                homepiclist: []
-            }
+            this.newAddassets_show = false
+            this.ruleForm.fileList = []
+            this.ruleForm.homepic = ''
+            this.ruleForm.pic_name = ''
+            this.bgstatus = 0
             this.rowData = {}
         },
 
-        handleNum (row) {
-            this.rowData = {};
-            console.log(`111`, row)
-            // let params = row.id
-            // console.log("查看接单状态", this.rowData.shipment_info);
-        },
         // 上传图片
-
-        handleAvatarSuccess (res, file) {
-            console.log(`成功`, res)
-            this.imageUrl = URL.createObjectURL(file.raw);
-            // this.ruleForm.homepic = res.data.file_path;
+        getFile (file, fileList) {
+            if (this.beforeAvatarUpload(file)) {
+                this.getBase64(file.raw).then(res => {
+                    this.ruleForm.homepic = res;
+                });
+            }
+        },
+        getBase64 (file) {
+            return new Promise(function (resolve, reject) {
+                let reader = new FileReader();
+                let imgResult = "";
+                reader.readAsDataURL(file);
+                reader.onload = function () {
+                    imgResult = reader.result;
+                };
+                reader.onerror = function (error) {
+                    reject(error);
+                };
+                reader.onloadend = function () {
+                    resolve(imgResult);
+                };
+            });
         },
         beforeAvatarUpload (file) {
-            const isJPG = file.type === 'image/jpeg';
-            const isPNG = file.type === 'image/png';
-            const isLt5M = file.size / 1024 / 1024 < 5;
+            let flag = true;
+            const isJPG = file.raw.type === "image/jpeg";
+            const isPNG = file.raw.type === "image/png";
+            const isLt5M = file.raw.size / 1024 / 1024 < 5;
             if (!isJPG && !isPNG) {
-                this.$message.error('请上传JPG格式图片!');
+                flag = false;
+                this.$message.error("请上传JPG或PNG格式图片!");
+                this.ruleForm.homepic = '';
+                this.ruleForm.fileList = []
             }
             if (!isLt5M) {
-                this.$message.error('上传图片大小不能超过 5MB!');
+                flag = false;
+                this.$message.error("上传图片大小不能超过 5MB!");
+                this.ruleForm.homepic = '';
+                this.ruleForm.fileList = []
             }
-            return (isJPG || isPNG) && isLt5M;
+            return flag;
         },
         handleRemove (file, fileList) {
             console.log(file, fileList);
@@ -309,7 +360,7 @@ export default {
         handlePictureCardPreview (file) {
             this.dialogImageUrl = file.url;
             this.dialogVisible = true;
-        }
+        },
     }
 }
 

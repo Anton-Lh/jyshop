@@ -149,8 +149,8 @@
 <script>
 // 时间戳过滤
 import moment from 'moment'
-import { getList } from '@/api/user'
-// import { getassets, getassetslist, postassetslist, putassetsWarehousing, putsubmitWarehousing } from '../../request'
+import { getList } from '@/api/customer'
+
 export default {
     name: 'assetManagement',
 
