@@ -1,30 +1,43 @@
 <template>
     <div class="containerPublic assetManagement">
-        <div class="form-block">
-            <!-- v-model.trim 自动过滤前后空格 -->
 
-            <span>背景图名称:</span>
-            <el-input class="input-width"
-                      v-model="search.name"></el-input>
-
-            <div class="button-block"
-                 style="display: inline-block;margin-left: 30px;">
-                <el-button type="primary"
-                           size="medium"
-                           @click="curPage=1;getInfo()">搜索</el-button>
-                <el-button type="info"
-                           size="medium"
-                           @click="resetSearchForm()">重置</el-button>
-                <el-button type="danger"
-                           size="medium"
-                           @click="newAddassets_show=true">新增商品</el-button>
-            </div>
-
+        <div class="borders">
+            <el-row :gutter="5">
+                <div>
+                    <el-col :span="3">
+                        <el-input placeholder="商品名称"
+                                  v-model="search.name"
+                                  clearable>
+                        </el-input>
+                    </el-col>
+                    <el-col :span="3">
+                        <el-select v-model="search.select_status"
+                                   clearable
+                                   placeholder="商品状态">
+                            <el-option v-for="item in status_type"
+                                       :key="item.value"
+                                       :label="item.label"
+                                       :value="item.value">
+                            </el-option>
+                        </el-select>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-button style="margin-left:10px;"
+                                   type="primary"
+                                   @click="curPage=1;getInfo()">搜索</el-button>
+                        <el-button type="info"
+                                   @click="resetSearchForm()">重置</el-button>
+                        <el-button type="danger"
+                                   @click="dialogTypeMethods(0)">添加</el-button>
+                    </el-col>
+                </div>
+            </el-row>
         </div>
-        <el-dialog title="新增商品"
+
+        <el-dialog :title="dialogTitle"
                    :close-on-click-modal="false"
                    center
-                   @close="colse_rule('ruleForm')"
+                   @close="colse_rule()"
                    :visible.sync="newAddassets_show">
             <el-form :model="ruleForm"
                      :rules="rules"
@@ -47,8 +60,17 @@
                               type="number"
                               v-model.trim="ruleForm.stock_number"></el-input>
                 </el-form-item>
-                <!-- 添加个状态开关 -->
-
+                <el-form-item label="商品状态"
+                              prop="goods_status">
+                    <el-select v-model="ruleForm.goods_status"
+                               placeholder="请选择商品状态">
+                        <el-option v-for="item in status_type"
+                                   :key="item.value"
+                                   :label="item.label"
+                                   :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
                 <el-form-item label="商品轮播">
                     <div class="imgBox2">
                         <el-upload class="avatar-uploader"
@@ -62,7 +84,7 @@
                                    :on-remove="handleRemove">
                             <i class="el-icon-plus"></i>
                         </el-upload>
-                        <span c>最多上传6张(建议尺寸325*325)</span>
+                        <span>最多上传6张(建议尺寸325*325)</span>
 
                     </div>
                 </el-form-item>
@@ -90,20 +112,18 @@
                  class="dialog-footer">
                 <span>
                     <el-button type="primary"
-                               @click="submitNewassets('ruleForm')">确定</el-button>
+                               @click="submitType()">确定</el-button>
                 </span>
 
                 <el-button style="display:inline-block;margin-left:10px"
-                           @click="newAddassets_show=false">取消</el-button>
+                           @click="colse_rule()">取消</el-button>
             </div>
         </el-dialog>
-
         <el-table :data="tableData"
                   style="width: 100%"
                   stripe
                   :header-cell-style="{textAlign:'center',background: '#f5f5f5',height: '40px',color:'#555555'} "
-                  :cell-style="{textAlign: 'center'}"
-                  @row-click="handleNum">
+                  :cell-style="{textAlign: 'center'}">
             <el-table-column type="index"
                              label="序号">
             </el-table-column>
@@ -111,7 +131,7 @@
                              label="商品名称">
             </el-table-column>
             <el-table-column prop="goods_unit"
-                             label="商品单位">
+                             label="单位">
             </el-table-column>
             <el-table-column prop="stock_number"
                              label="商品数量">
@@ -119,8 +139,11 @@
             <el-table-column prop="password"
                              label="商品简介">
             </el-table-column>
-            <el-table-column prop="goods_status"
-                             label="状态">
+            <el-table-column label="商品状态">
+                <template slot-scope="scope">
+                    <span v-if="scope.row.goods_status == 0">下架</span>
+                    <span v-else-if="scope.row.goods_status == 1">上架</span>
+                </template>
             </el-table-column>
             <el-table-column prop="addtimeStr"
                              label="注册时间">
@@ -128,8 +151,12 @@
             <!-- @click="edit(scope.$index, scope.row)" -->
             <el-table-column label="操作">
                 <template slot-scope="scope">
-                    <span>编辑</span>
-                    <span>删除</span>
+                    <el-button type="success"
+                               v-on:click="edit(scope.$index, scope.row)"
+                               size="small">编辑</el-button>
+                    <el-button type="danger"
+                               v-on:click="del(scope.$index, scope.row)"
+                               size="small">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -148,12 +175,12 @@
 <script>
 // 时间戳过滤
 import moment from 'moment'
-import { getList, deletePollPicture } from "@/api/goods";
+import { getList, addApi, deletePollPicture, updateApi, deleteApi } from "@/api/goods";
 import { quillEditor } from "vue-quill-editor"
 import quillConfig from '@/utils/quill-config.js'
 
 export default {
-    name: 'assetManagement',
+    name: 'commodity_list',
     components: {
         quillEditor,
     },
@@ -162,6 +189,9 @@ export default {
             curPage: 1,
             page_size: 20,
             total: 0,
+            status_type: [{ value: 0, label: '下架' }, { value: 1, label: '上架' }],
+            dialogTitle: '',
+            dialogType: 0,
             tableData: [],
             dialogImageUrl: '',
             fileList: [],
@@ -172,7 +202,7 @@ export default {
                 goods_unit: '',
                 goods_introduce: '',
                 stock_number: 0,
-                goods_status: 0,
+                goods_status: '',
                 goods_poll_img: ''
             },
             alreadyFileList: [],
@@ -189,14 +219,16 @@ export default {
                 ],
                 goods_introduce: [
                     { required: true, message: '请输入商品简介', trigger: 'blur' }
+                ],
+                goods_status: [
+                    { required: true, message: '请选择商品状态', trigger: 'change' }
                 ]
             },
             dialogVisible_pic: false,
-
-            rowData: {},
             newAddassets_show: false,
             search: {
                 name: '',
+                select_status: ''
             }
         }
     },
@@ -220,6 +252,7 @@ export default {
                     page_index: this.curPage,
                     page_size: this.page_size,
                     goods_name: this.search.name,
+                    goods_status: this.search.select_status = '' ? -1 : this.search.select_status,
                 }).then(res => {
                     const data = res.data;
                     if (data.Result) {
@@ -231,26 +264,124 @@ export default {
                 });
             })
         },
-
         resetSearchForm () {
             this.search.name = ''
+            this.search.select_status = ''
             this.curPage = 1
             this.getInfo();
         },
-        submitNewassets (formName) {
-            this.$refs[formName].validate((valid) => {
+        dialogTypeMethods (type) {
+            this.newAddassets_show = true
+            if (type == 0) { //添加窗口
+                this.dialogTitle = '添加商品'
+                this.dialogType = 0
+            } else if (type == 1) { //修改窗口
+                this.dialogTitle = '编辑商品'
+                this.dialogType = 1
+            }
+        },
+        submitType () {
+            if (this.dialogType == 0) {
+                this.submitNewassets()
+            } else if (this.dialogType == 1) {
+                this.saveEdit()
+            }
+        },
+        submitNewassets () { //添加
+            this.ruleForm.goods_poll_img = this.getPollImg();
+            //校验参数
+            this.$refs['ruleForm'].validate((valid) => {
                 if (valid) {
-                    let data = this.ruleForm
-                    console.log(`data`, data)
+                    let postData = this.ruleForm
+                    console.log('添加的', postData)
+                    return new Promise((resolve, reject) => {
+                        addApi(postData).then(res => {
+                            const data = res.data
+                            if (data.Result) {
+                                this.$message.success(data.Message)
+                                this.getInfo()
+                                this.colse_rule()
+                            } else {
+                                this.$message.error(data.Message)
+                            }
+                        }).catch(error => {
+                            reject(error)
+                        })
+                    })
 
                 } else {
-                    console.log('error submit!!');
+                    console.log('error submit!!')
                     return false;
                 }
             });
 
         },
-
+        edit (index, row) { //编辑
+            var _obj = {}
+            _obj = JSON.parse(JSON.stringify(row))
+            console.log(_obj)
+            this.ruleForm = _obj
+            var poll = this.ruleForm.goods_poll_img.split(";")
+            for (var i = 0; i < poll.length; i++) {
+                console.log(poll[i])
+                if (poll != "") {
+                    this.fileList.push({ name: poll[i], url: process.env.BASE_API + poll[i] })
+                    this.alreadyFileList.push({ name: poll[i], uid: poll[i], path: poll[i] })
+                }
+            }
+            this.dialogTypeMethods(1)
+        },
+        saveEdit () {
+            this.$refs.ruleForm.validate(valid => {
+                if (valid) {
+                    this.ruleForm.goods_poll_img = this.getPollImg();
+                    var postData = this.ruleForm
+                    console.log('编辑的', postData)
+                    return new Promise((resolve, reject) => {
+                        updateApi(postData).then(res => {
+                            const data = res.data
+                            if (data.Result) {
+                                this.$message.success(data.Message)
+                                this.getInfo()
+                                this.colse_rule()
+                            } else {
+                                this.$message.error('编辑失败')
+                            }
+                            resolve()
+                        }).catch(error => {
+                            reject(error)
+                        })
+                    })
+                }
+            })
+        },
+        // 点击删除
+        del (index, row) {
+            this.$confirm('此操作将永久删除, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                return new Promise((resolve, reject) => {
+                    deleteApi(row)
+                        .then(res => {
+                            const data = res.data
+                            if (data.Result) {
+                                this.getInfo();
+                                this.$message.success(data.Message)
+                            } else {
+                                this.$message.error(data.Message)
+                            }
+                            resolve()
+                        })
+                        .catch(error => {
+                            reject(error)
+                        })
+                })
+            }).catch(() => {
+                return
+            })
+        },
         // 每页显示条数操作
         handleSizeChange (val) {
             this.page_size = val
@@ -264,19 +395,24 @@ export default {
         },
 
 
-        colse_rule (formName) {
-            this.$refs[formName].resetFields();
-            this.hideUpload = false
+        colse_rule () {
+            this.$refs.ruleForm.resetFields();
+            this.newAddassets_show = false
             this.fileList = []
-            this.rowData = {}
-        },
-
-        handleNum (row) {
-            this.rowData = {};
+            this.alreadyFileList = []
+            this.ruleForm = {
+                goods_name: '',
+                goods_unit: '',
+                goods_introduce: '',
+                stock_number: 0,
+                goods_status: '',
+                goods_poll_img: ''
+            }
         },
         // 上传图片
         handleAvatarSuccess (res, file) {
-            this.alreadyFileList.push({ uid: file.uid, path: res });
+            var result = JSON.stringify(res)
+            this.alreadyFileList.push({ name: '', uid: file.uid, path: result });
             this.imageUrl = URL.createObjectURL(file.raw);
         },
         beforeAvatarUpload (file) {
@@ -293,12 +429,27 @@ export default {
         },
         handleRemove (file, fileList) {
             for (var i = 0; i < this.alreadyFileList.length; i++) {
-                if (this.alreadyFileList[i].uid == file.uid) {
+                if (!this.alreadyFileList[i].name) {  //新添加的删除
+                    if (this.alreadyFileList[i].uid == file.uid || this.alreadyFileList[i].uid != file.name) {
+                        let pram = this.alreadyFileList[i].path;
+                        this.alreadyFileList.splice(i, 1);
+                        //相同uid时，删除服务器中对应的图片
+                        return new Promise((resolve, reject) => {
+                            deletePollPicture({ file: pram }).then(res => {
+                                this.$message.success("删除成功");
+                                resolve(res);
+                            }).catch(error => {
+                                reject(error);
+                            });
+                        });
+                    }
+                } else {  //已存在的删除
                     let pram = this.alreadyFileList[i].path;
+                    this.alreadyFileList.splice(i, 1);
                     //相同uid时，删除服务器中对应的图片
                     return new Promise((resolve, reject) => {
                         deletePollPicture({ file: pram }).then(res => {
-                            this.$message.success("删除成功");
+                            this.$message.success("对应图片删除成功");
                             resolve(res);
                         }).catch(error => {
                             reject(error);
@@ -306,6 +457,7 @@ export default {
                     });
                 }
             }
+
         },
         handlePictureCardPreview (file) {
             this.dialogImageUrl = file.url;
@@ -315,6 +467,25 @@ export default {
         onEditorBlur () { }, // 失去焦点事件
         onEditorFocus () { }, // 获得焦点事件
         onEditorChange () { }, // 内容改变事件
+        guid () {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        },
+        getPollImg () {
+            var pollImg = ''
+            for (var i = 0; i < this.alreadyFileList.length; i++) {
+                if (i == 0) {
+                    pollImg += `${this.alreadyFileList[i].path}`;
+                } else {
+                    pollImg += `;${this.alreadyFileList[i].path}`;
+                }
+            }
+            var reg = new RegExp('"', "g");
+            pollImg = pollImg.replace(reg, "");
+            return pollImg;
+        }
     }
 }
 
@@ -335,6 +506,11 @@ export default {
 }
 .imgBox3 {
   overflow: hidden;
+}
+.borders {
+  border: 1px solid #e6e6e6;
+  padding: 20px;
+  margin-bottom: 10px;
 }
 /deep/.el-upload--picture-card {
   background-color: #fbfdff;
@@ -378,7 +554,6 @@ export default {
       margin-bottom: 35px;
     }
     display: inline-block;
-    width: 100px;
     margin-bottom: 20px;
   }
   .el-table th {
@@ -429,14 +604,6 @@ export default {
 }
 .row-bg {
   margin-bottom: 30px;
-}
-.el-col-12 {
-  margin-bottom: 20px;
-  width: 43.5%;
-  span {
-    display: inline-block;
-    margin-right: 10px;
-  }
 }
 .mt-40 {
   margin-top: 40px;

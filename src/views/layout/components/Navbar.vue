@@ -1,25 +1,32 @@
 <template>
-  <div class="navbar">
-    <hamburger :toggle-click="toggleSideBar" :is-active="sidebar.opened" class="hamburger-container"/>
-    <breadcrumb />
-    <el-dropdown class="avatar-container" trigger="click">
-      <div class="avatar-wrapper">
-        <div class="adminname">{{loginName}}</div>
-        <img class="user-avatar" src="../../../assets/avatar.png">
-        <i class="el-icon-caret-bottom"/>
-      </div>
-      <el-dropdown-menu slot="dropdown" class="user-dropdown">
-        <router-link class="inlineBlock" to="/">
-          <el-dropdown-item>
-            首页
-          </el-dropdown-item>
-        </router-link>
-        <el-dropdown-item divided>
-          <span style="display:block;" @click="logout">退出</span>
-        </el-dropdown-item>
-      </el-dropdown-menu>
-    </el-dropdown>
-  </div>
+    <div class="navbar">
+        <hamburger :toggle-click="toggleSideBar"
+                   :is-active="sidebar.opened"
+                   class="hamburger-container" />
+        <breadcrumb />
+        <el-dropdown class="avatar-container"
+                     trigger="click">
+            <div class="avatar-wrapper">
+                <div class="adminname">{{loginName}}</div>
+                <img class="user-avatar"
+                     src="../../../assets/avatar.png">
+                <i class="el-icon-caret-bottom" />
+            </div>
+            <el-dropdown-menu slot="dropdown"
+                              class="user-dropdown">
+                <router-link class="inlineBlock"
+                             to="/">
+                    <el-dropdown-item>
+                        首页
+                    </el-dropdown-item>
+                </router-link>
+                <el-dropdown-item divided>
+                    <span style="display:block;"
+                          @click="logout">退出</span>
+                </el-dropdown-item>
+            </el-dropdown-menu>
+        </el-dropdown>
+    </div>
 </template>
 
 <script>
@@ -28,34 +35,34 @@ import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
 
 export default {
-  components: {
-    Breadcrumb,
-    Hamburger
-  },
-  computed: {
-    ...mapGetters([
-      'sidebar',
-      'avatar'
-    ]),
-    loginName: function(){
-      return this.$store.getters.name == null ? '' : this.$store.getters.name
-    }
-  },
-  methods: {
-    toggleSideBar() {
-      this.$store.dispatch('ToggleSideBar')
+    components: {
+        Breadcrumb,
+        Hamburger
     },
-    logout() {
-      this.$store.dispatch('LogOut').then(() => {
-        location.reload() // 为了重新实例化vue-router对象 避免bug
-      })
+    computed: {
+        ...mapGetters([
+            'sidebar',
+            'avatar'
+        ]),
+        loginName: function () {
+            return this.$store.getters.name == null ? '' : this.$store.getters.name
+        }
+    },
+    methods: {
+        toggleSideBar () {
+            this.$store.dispatch('ToggleSideBar')
+        },
+        logout () {
+            this.$store.dispatch('LogOut').then(() => {
+                location.reload() // 为了重新实例化vue-router对象 避免bug
+            })
+        }
     }
-  }
 }
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-.adminname{
+.adminname {
   position: absolute;
   right: 60px;
   margin-top: 8px;
@@ -66,7 +73,7 @@ export default {
 .navbar {
   height: 50px;
   line-height: 50px;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,.12), 0 0 3px 0 rgba(0,0,0,.04);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 0 3px 0 rgba(0, 0, 0, 0.04);
   .hamburger-container {
     line-height: 58px;
     height: 50px;
@@ -102,10 +109,10 @@ export default {
       }
     }
   }
-  .avatar-wrapper2{
+  .avatar-wrapper2 {
     height: 50px;
     margin-top: 5px;
-    .adminname{
+    .adminname {
       height: 100%;
       line-height: 40px;
       font-size: 24px;

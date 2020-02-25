@@ -131,7 +131,7 @@
 import moment from 'moment'
 import { getbgimg, addbgimg, updatebgimg, delbgimg } from '@/api/backgroundmap'
 export default {
-    name: 'assetManagement',
+    name: 'bckgroundmap',
     data () {
         return {
             curPage: 1,

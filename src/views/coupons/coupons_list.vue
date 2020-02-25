@@ -21,7 +21,7 @@
             </div>
 
         </div>
-        <el-dialog title="卡券新增"
+        <el-dialog :title="coupons_title"
                    :close-on-click-modal="false"
                    center
                    @close="colse_rule('ruleForm')"
@@ -29,112 +29,86 @@
             <el-form :model="ruleForm"
                      :rules="rules"
                      ref="ruleForm"
+                     height="40px"
                      label-width="100px"
                      class="demo-ruleForm ">
 
                 <el-form-item label="名称"
-                              prop="name">
+                              prop="ticket_name">
                     <el-input placeholder="价格就是名称,例：300"
-                              v-model.trim="ruleForm.name"></el-input>
+                              v-model.trim="ruleForm.ticket_name"></el-input>
                 </el-form-item>
                 <el-form-item label="产品"
-                              prop="type">
-                    <el-select v-model="ruleForm.type"
+                              class="couponstype"
+                              prop="goods_ids">
+                    <el-select v-model="ruleForm.goods_ids"
                                multiple
                                @change="handeltype"
                                style="width: 250px;"
                                placeholder="请选择类型">
-                        <el-option label="固定资产"
-                                   value="固定资产"></el-option>
-                        <el-option label="耗品"
-                                   value="耗品"></el-option>
+                        <el-option v-for="item in goodsAll"
+                                   :key="item.id"
+                                   :label="item.goods_name"
+                                   :value="item.id"></el-option>
+
                     </el-select>
                 </el-form-item>
 
             </el-form>
+            <el-table :data="goods_list"
+                      stripe
+                      class="goodstable"
+                      style="width: 100%">
+                <el-table-column prop="name"
+                                 label="已选产品">
+                </el-table-column>
+            </el-table>
             <div slot="footer"
                  class="dialog-footer">
-                <span>
+                <span v-if="coupons_status=='1'">
                     <el-button type="primary"
-                               @click="submitNewassets(2,'ruleForm')">确定</el-button>
+                               @click="submitNewassets(1,'ruleForm')">确定</el-button>
                 </span>
-
+                <span v-else>
+                    <el-button type="primary"
+                               @click="submitPreservation(2,'ruleForm')">保存</el-button>
+                </span>
                 <el-button style="display:inline-block;margin-left:10px"
                            @click="newAddassets_show=false">取消</el-button>
             </div>
         </el-dialog>
 
-        <!-- <el-dialog :title="cartitle"
-                   :close-on-click-modal="false"
-                   center
-                   @close="colse_rule2('ruleForm2')"
-                   :visible.sync="confrim_assets_detail_show">
-            <el-row style="margin-left: 50px;margin-bottom: 10px;">
-                <el-col :span="12">
-                    <span>编号:</span>
-                    <b>{{rowData.ref}}</b>
-                </el-col>
-                <el-col :span="12">
-                    <span>名称:</span>
-                    <b>{{rowData.name}}</b>
-                </el-col>
-                <el-col :span="12">
-                    <span>类型:</span>
-                    <b>{{rowData.type_value}}</b>
-                </el-col>
-                <el-col :span="12">
-                    <span>类别:</span>
-                    <b>{{rowData.category}}</b>
-                </el-col>
-                <el-col :span="12">
-                    <span>规格:</span>
-                    <b>{{rowData.spec}}</b>
-                </el-col>
-                <el-col :span="12">
-                    <span>颜色:</span>
-                    <b>{{rowData.color}}</b>
-                </el-col>
-
-            </el-row>
-
-            <div slot="footer"
-                 v-if="rowData.status==1"
-                 class="dialog-footer">
-                <el-button type="primary"
-                           @click="confirmStorage('ruleForm2')">入库</el-button>
-                <el-button type="default"
-                           @click="confrim_assets_detail_show=false">取消</el-button>
-            </div>
-        </el-dialog> -->
-        <!-- 图片预览 -->
-        <!-- <el-dialog :visible.sync="dialogVisible_pic"
-                   style="text-align:center;"
-                   size="tiny">
-            <img :src="dialogImageUrl"
-                 alt="">
-        </el-dialog> -->
         <el-table :data="tableData"
                   style="width: 100%"
                   stripe
                   :header-cell-style="{textAlign:'center',background: '#f5f5f5',height: '40px',color:'#555555'} "
-                  :cell-style="{textAlign: 'center'}"
-                  @row-click="handleNum">
+                  :cell-style="{textAlign: 'center'}">
 
             <el-table-column prop="id"
                              label="序号">
             </el-table-column>
-            <el-table-column prop="name"
+            <el-table-column prop="ticket_name"
                              label="卡券名称">
             </el-table-column>
-            <el-table-column prop="account"
-                             label="产品名称">
+            <el-table-column prop="goods_count"
+                             label="商品总数">
             </el-table-column>
             <el-table-column prop="addtime"
                              label="创建时间">
             </el-table-column>
+            <el-table-column label="操作">
+                <template slot-scope="scope">
+                    <el-button type="success"
+                               v-on:click="edit(scope.$index, scope.row)"
+                               size="small">编辑</el-button>
+                    <el-button type="danger"
+                               v-on:click="del(scope.$index, scope.row)"
+                               size="small">删除</el-button>
+                </template>
+            </el-table-column>
 
         </el-table>
-        <!-- <div class="pagination-container">
+        <div class="pagination-container">
             <el-pagination :current-page="curPage"
                            @size-change="handleSizeChange"
                            @current-change="handleCurrentChange"
@@ -143,60 +117,44 @@
                            layout="total, sizes, prev, pager, next, jumper"
                            :total="total">
             </el-pagination>
-        </div> -->
+        </div>
     </div>
 </template>
 <script>
 // 时间戳过滤
 import moment from 'moment'
-import { getList } from '@/api/customer'
+import { getCoupons, delCoupons, addCoupons, editCoupons } from '@/api/coupons'
+import { allGoods, tikcetGoods } from '@/api/goods'
+import { resolve, reject } from 'q';
 
 export default {
-    name: 'assetManagement',
+    name: 'coupons_list',
 
     data () {
         return {
             curPage: 1,
             page_size: 20,
             total: 0,
-            base_status: [],
-            base_supplier: [],
-            base_type: [],
-            base_category: [],
+            coupons_title: '卡券新增',
+            coupons_status: '1',
+            goods_list: [],
             tableData: [],
-            base_location: [],
-            dialogImageUrl: '',
-            totalPrice: 0,
-            permission_button: {},
             ruleForm: {
-                name: '',
-                type: '',
-
-                fileList: []
+                ticket_name: '',
+                goods_ids: [],
             },
             rules: {
-                name: [
+                ticket_name: [
                     { required: true, message: '请输入名称', trigger: 'blur' },
                     { min: 1, max: 255, message: '长度在 1 到 255 个字符', trigger: 'blur' }
                 ],
-                type: [
+                goods_ids: [
                     { required: true, message: '请选择产品', trigger: 'change' },
                 ],
             },
-
-            dialogVisible_pic: false,
-
-            options: [{
-                value: '1',
-                label: '已确认'
-            }, {
-                value: '2',
-                label: '待确认'
-            }],
+            goodsAll: [],
             rowData: {},
             newAddassets_show: false,
-            confrim_assets_detail_show: false,
-            cartitle: '',
             search: {
                 name: '',
             }
@@ -213,43 +171,47 @@ export default {
         }
     },
     created () {
+        this.getInt()
         this.getInfo()
-        // this.getInt()
     },
     methods: {
         getInt () {
+            allGoods({ goods_name: '' }).then(res => {
+                let Data = res.data.Data
+                Data.forEach(item => {
+                    this.goodsAll.push({
+                        id: item.id,
+                        goods_name: item.goods_name
+                    })
+                })
 
+            })
         },
         getInfo () {
             let params = {
-                page: this.curPage,
-                page_size: this.page_siz,
+                page_index: this.curPage,
+                page_size: this.page_size,
                 total: this.total,
-                name: this.search.name,
+                ticket_name: this.search.name,
                 // 判断当前搜索时间数组长度
             }
-            getList(params).then(res => {
-                if (res.status == 200) {
-                    this.tableData = res.data.Data
-                    console.log(`成功数据`, this.tableData)
-
-                }
+            return new Promise((resolve, reject) => {
+                getCoupons(params).then(res => {
+                    const data = res.data;
+                    console.log(data)
+                    if (data.Result) {
+                        this.tableData = res.data.Data;
+                        this.total = res.data.PageInfo.TotalCount;
+                    } else {
+                        this.$message.error(data.Message)
+                    }
+                }).catch(error => {
+                    reject(error)
+                })
             })
-            // getassetslist(params).then(res => {
-            //     if (res.error == 0) {
-            //         console.log(`列表`, res)
-            //         this.tableData = res.data.data
-            //         this.permission_button = res.data.permission_button
-            //         this.total = res.data.total
-            //     }
-
-            // })
 
 
         },
-
-
-
         resetSearchForm () {
             this.search = {
                 name: '',
@@ -259,48 +221,85 @@ export default {
         },
         handeltype (val) {
             console.log(val)
-        },
-        addNewassets (type, formName) {
-            this.$refs[formName].validate((valid) => {
-                if (valid) {
-                    console.log(type, this.ruleForm)
-                    let params = {
-                        save_type: type,
-                        ref: this.ruleForm.ref,
-                        name: this.ruleForm.name,
-                        type: this.ruleForm.type == "固定资产" ? 1 : 2,
-                        category: this.ruleForm.category,
-                        spec: this.ruleForm.spec,
-                        color: this.ruleForm.color,
+            this.goods_list = []
+            val.forEach(it => {
+                this.goodsAll.forEach(item => {
+                    if (it == item.id) {
+                        this.goods_list.push({ name: item.goods_name })
                     }
-                    console.log(params)
-
-
-
-                } else {
-                    console.log('error submit!!');
-                    return false;
-                }
-            });
+                })
+            })
+        },
+        async edit (index, row) {
+            // this.rowData = {};
+            // this.rowData = row;
+            const res = await tikcetGoods({ id: row.id })
+            console.log(res)
+            if (res.data.Result) {
+                this.rowData = row
+                let data = res.data.Data
+                this.coupons_title = '卡券编辑'
+                this.coupons_status = '2'
+                this.ruleForm.ticket_name = row.ticket_name;
+                data.forEach(item => {
+                    this.ruleForm.goods_ids.push(item.id)
+                    this.goods_list.push({ name: item.goods_name })
+                })
+                //  goods_ids
+                this.newAddassets_show = true
+            }
+            // tikcetGoods({id:row.id}).then(res=>{
+            //     console.log(res)
+            // })
+        },
+        del (index, row) {
+            console.log(row.id)
+            this.$confirm('此操作将永久删除, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                return new Promise((resolve, reject) => {
+                    delCoupons(row).then(res => {
+                        const data = res.data
+                        if (data.Result) {
+                            this.getInfo();
+                            this.$message.success(data.Message)
+                        } else {
+                            this.$message.error(data.Message)
+                        }
+                        resolve()
+                    })
+                        .catch(error => {
+                            reject(error)
+                        })
+                })
+            }).catch(() => {
+                return
+            })
         },
         submitNewassets (type, formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
                     let data = {
-                        save_type: type,
-                        name: this.ruleForm.name,
-                        type: this.ruleForm.type
-                        // type: this.ruleForm.type == "固定资产" ? 1 : 2,
+                        ticket_name: this.ruleForm.ticket_name,
+                        goods_ids: this.ruleForm.goods_ids
                     }
-                    console.log(`data`, data)
-                    // putsubmitWarehousing({ id: this.rowData.id, data }).then(res => {
-                    //     if (res.error == 0) {
-                    //         console.log(res)
-                    //         this.getInfo()
-                    //         this.newAddassets_show = false
-                    //     }
-                    // })
+                    return new Promise((resolve, reject) => {
+                        addCoupons(data).then(res => {
+                            const data = res.data
+                            if (data.Result) {
+                                this.getInfo();
+                                this.newAddassets_show = false
+                                this.$message.success('添加成功')
+                            } else {
+                                this.$message.error(data.Message)
+                            }
+                        }).catch(error => {
+                            reject(error)
+                        })
 
+                    })
 
                 } else {
                     console.log('error submit!!');
@@ -308,34 +307,29 @@ export default {
                 }
             });
         },
-        confirmStorage (formName) {
+        submitPreservation (type, formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    console.log(this.ruleForm2)
-                    let _flag = false
-                    if (this.ruleForm2.purchase_quantity == 0) {
-                        this.$message.warning('采购数量不可为0')
-                        _flag = true
+                    let data = {
+                        id: this.rowData.id,
+                        ticket_name: this.ruleForm.ticket_name,
+                        goods_ids: this.ruleForm.goods_ids
                     }
-                    if (!_flag) {
-                        let data = {
-                            asset_location_id: this.ruleForm2.asset_location_id,
-                            supplier_contacts: this.ruleForm2.supplier_contacts,
-                            supplier: this.ruleForm2.supplier,
-                            supplier_phone: this.ruleForm2.supplier_phone,
-                            purchase_at: this.ruleForm2.purchase_at / 1000,
-                            purchase_quantity: this.ruleForm2.purchase_quantity,
-                            purchase_price: this.ruleForm2.purchase_price
-                        }
-                        console.log(data)
-                        // putassetsWarehousing({ id: this.rowData.id, data }).then(res => {
-                        //     if (res.error == 0) {
-                        //         this.getInfo()
-                        //         this.confrim_assets_detail_show = false
-                        //         this.$message.success("入库成功")
-                        //     }
-                        // })
-                    }
+                    return new Promise((resolve, reject) => {
+                        editCoupons(data).then(res => {
+                            const data = res.data
+                            if (data.Result) {
+                                this.getInfo();
+                                this.newAddassets_show = false
+                                this.$message.success('编辑成功')
+                            } else {
+                                this.$message.error(data.Message)
+                            }
+                        }).catch(error => {
+                            reject(error)
+                        })
+
+                    })
 
                 } else {
                     console.log('error submit!!');
@@ -343,6 +337,7 @@ export default {
                 }
             });
         },
+
         // 每页显示条数操作
         handleSizeChange (val) {
             this.page_size = val
@@ -358,46 +353,14 @@ export default {
 
         colse_rule (formName) {
             this.$refs[formName].resetFields();
-            this.ruleForm.spec = ""
-            this.ruleForm.color = ""
-            this.ruleForm.ref = ""
-            this.ruleForm.name = ""
-            this.ruleForm.type = ""
-            this.ruleForm.category = ""
-            this.ruleForm.fileList = []
             this.rowData = {}
+            this.coupons_title = '卡券新增'
+            this.coupons_status = '1'
+            this.ruleForm.ticket_name = ''
+            this.ruleForm.goods_ids = []
+            this.goods_list = []
         },
-        colse_rule2 (formName) {
-            this.$refs[formName].resetFields();
-            this.totalPrice = 0
-            this.ruleForm2.purchase_at = ''
-        },
-        handleNum (row) {
-            this.rowData = {};
-            this.rowData = row;
-            if (row.status == 0) {
-                this.newAddassets_show = true
-                this.ruleForm.ref = this.rowData.ref
-                this.ruleForm.name = this.rowData.name
-                this.ruleForm.type = this.rowData.type_value
-                this.ruleForm.category = this.rowData.category
-                this.ruleForm.spec = this.rowData.spec
-                this.ruleForm.color = this.rowData.color
-                this.newAddassets_show = true
 
-
-            } else {
-                this.confrim_assets_detail_show = true
-            }
-            this.cartitle = row.status == 0 ? "新建入库" : '入库详情'
-            console.log(`111`, row)
-            if (row.status == 1) {
-                this.totalPrice = row.purchase_quantity * row.purchase_price
-            }
-
-            // let params = row.id
-            // console.log("查看接单状态", this.rowData.shipment_info);
-        }
     }
 }
 
@@ -519,5 +482,13 @@ export default {
 /deep/.el-form-item {
   width: 350px;
   display: inline-block;
+}
+.goodstable {
+  max-height: 300px;
+  overflow: auto;
+}
+.couponstype {
+  height: 41px;
+  overflow-y: auto;
 }
 </style>

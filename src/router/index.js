@@ -31,10 +31,11 @@ export const constantRouterMap = [
         component: Layout,
         redirect: '/dashboard',
         name: 'Dashboard',
-        hidden: true,
+        // hidden: true,
         children: [{
             path: 'dashboard',
-            component: () => import('@/views/dashboard/index')
+            component: () => import('@/views/dashboard/index'),
+            meta: { title: '首页', icon: 'example' }
         }]
     },
 
@@ -47,21 +48,8 @@ export const constantRouterMap = [
                 path: 'userList',
                 name: '账号管理',
                 component: () => import('@/views/user/userList'),
-                meta: { title: '账号管理', icon: '用户管理' }
+                meta: { title: '账号管理', icon: 'team' }
             }
-        ]
-    },
-    {
-        path: '/coupons',
-        component: Layout,
-        meta: { title: '卡券管理', icon: '用户管理' },
-        children: [
-            {
-                path: 'coupons_list',
-                name: '卡券管理',
-                component: () => import('@/views/coupons/coupons_list'),
-                meta: { title: '卡券列表', icon: '用户管理' }
-            },
         ]
     },
     {
@@ -78,15 +66,42 @@ export const constantRouterMap = [
         ]
     },
     {
+        path: '/ordermanagement',
+        component: Layout,
+        meta: { title: '订单管理', icon: 'form' },
+        children: [
+            {
+                path: 'order_list',
+                name: '订单管理',
+                component: () => import('@/views/ordermanagement/order_list'),
+                meta: { title: '订单列表', icon: 'form' }
+            },
+        ]
+    },
+    {
+        path: '/coupons',
+        component: Layout,
+        meta: { title: '卡券管理', icon: 'teacher' },
+        children: [
+            {
+                path: 'coupons_list',
+                name: '卡券管理',
+                component: () => import('@/views/coupons/coupons_list'),
+                meta: { title: '卡券列表', icon: 'table' }
+            },
+        ]
+    },
+
+    {
         path: '/commoditymanagement',
         component: Layout,
-        meta: { title: '商品管理', icon: '用户管理' },
+        meta: { title: '商品管理', icon: 'school' },
         children: [
             {
                 path: 'commoditymanagement',
                 name: '商品管理',
                 component: () => import('@/views/commoditymanagement/commodity_list'),
-                meta: { title: '商品管理', icon: '用户管理' }
+                meta: { title: '商品管理', icon: 'school' }
             },
         ]
     },
@@ -94,13 +109,13 @@ export const constantRouterMap = [
     {
         path: '/bckgroundmap',
         component: Layout,
-        meta: { title: '背景图管理', icon: '用户管理' },
+        meta: { title: '背景图管理', icon: 'example' },
         children: [
             {
                 path: 'bckgroundmap',
                 name: '背景图管理',
                 component: () => import('@/views/bckgroundmap/bckgroundmap'),
-                meta: { title: '背景图管理', icon: '用户管理' }
+                meta: { title: '背景图管理', icon: 'example' }
             },
         ]
     },
