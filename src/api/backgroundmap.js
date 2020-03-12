@@ -28,4 +28,10 @@ export function delbgimg (data) {
         data
     })
 }
+export function getTBgimgAll () {
+    return request({
+        url: '/api/Bgimg/GetTBgimgAll',
+        method: 'post'
+    })
+}
 

@@ -8,21 +8,22 @@
                         :isAxisChart="false"
                         style="height: 280px"></echart>
             </el-card>
-            <el-card shadow="hover">
+            <!-- <el-card shadow="hover">
                 <el-card shadow="hover">
                     <echart :chartData="echartData.user"
                             style="height: 260px"></echart>
                 </el-card>
-            </el-card>
-            <el-card shadow="hover">
+            </el-card> -->
+            <!-- <el-card shadow="hover">
                 <echart :chartData="echartData.order"
                         style="height: 260px"></echart>
-            </el-card>
+            </el-card> -->
         </el-col>
     </div>
 </template>
 
 <script>
+import { getEchart } from '@/api/table'
 import { mapGetters } from 'vuex'
 import echarts from 'echarts'
 import Echart from './EChart'
@@ -56,19 +57,31 @@ export default {
     },
     mounted () {
         this.getEchart()
+        this.getInfo()
     },
     methods: {
-        getEchart () {
-
-            this.echartData.video.series.push({
-                data: [
-                    { value: 335, name: '直接访问' },
-                    { value: 310, name: '总和客户' },
-                    { value: 234, name: '新增客户' },
-                    { value: 135, name: '卡券数量' }
-                ],
-                type: 'pie'
+        getInfo () {
+            getEchart().then(res => {
+                const data = res.data
+                console.log(data)
+                if (data.Result) {
+                    let EchartData = []
+                    data.Data.forEach(item => {
+                        EchartData.push({
+                            value: item.customer_count,
+                            name: item.customer_name
+                        })
+                    })
+                    this.echartData.video.series.push({
+                        data: EchartData,
+                        type: 'pie'
+                    })
+                } else {
+                    this.$message.error(data.Message)
+                }
             })
+        },
+        getEchart () {
             this.echartData.order.xData.push(
                 {
                     type: 'category',

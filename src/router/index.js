@@ -66,6 +66,19 @@ export const constantRouterMap = [
         ]
     },
     {
+        path: '/codemanagement',
+        component: Layout,
+        meta: { title: '二维码管理', icon: 'tree' },
+        children: [
+            {
+                path: 'code_list',
+                name: '二维码管理',
+                component: () => import('@/views/codemanagement/code_list'),
+                meta: { title: '二维码管理', icon: 'tree' }
+            },
+        ]
+    },
+    {
         path: '/ordermanagement',
         component: Layout,
         meta: { title: '订单管理', icon: 'form' },

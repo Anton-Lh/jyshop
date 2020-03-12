@@ -51,9 +51,10 @@
                             <i class="el-icon-plus"></i>
                         </el-upload>
 
-                        <span>(建议尺寸325*640)</span>
                     </div>
+
                 </el-form-item>
+                <span class="txt_style">(建议尺寸1334 头部banner 250 底部 460)</span>
 
             </el-form>
             <el-dialog :visible.sync="dialogVisible">
@@ -75,7 +76,6 @@
                            @click="newAddassets_show=false">取消</el-button>
             </div>
         </el-dialog>
-
         <el-table :data="tableData"
                   style="width: 100%"
                   stripe
@@ -87,8 +87,7 @@
             <el-table-column prop="bg_name"
                              label="背景图名称">
             </el-table-column>
-            <el-table-column width="60"
-                             height="60"
+            <el-table-column height="60"
                              label="图片">
                 <template slot-scope="scope">
                     <el-popover placement="right"
@@ -472,6 +471,11 @@ export default {
 }
 .dialog-footer {
   text-align: center;
+}
+.txt_style {
+  text-align: left;
+  width: 75%;
+  display: inline-block;
 }
 .row-bg {
   margin-bottom: 30px;

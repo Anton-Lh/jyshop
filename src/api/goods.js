@@ -55,3 +55,10 @@ export function deleteApi (data) {
         data
     })
 }
+// 静态商品
+export function GetTGoodsAll () {
+    return request({
+        url: '/api/Goods/GetTGoodsAll',
+        method: 'post',
+    })
+}

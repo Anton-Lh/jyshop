@@ -5,6 +5,7 @@
 
             <span>状态:</span>
             <el-select v-model="search.status"
+                       filterable
                        placeholder="请选择">
                 <el-option v-for="item in options"
                            :key="item.key"
@@ -92,11 +93,11 @@
             <el-table-column prop="addtime"
                              label="注册时间">
             </el-table-column>
-            <el-table-column label="操作">
+            <!-- <el-table-column label="操作">
                 <template slot-scope="scope">
                     <span @click="handleNum(scope.row)">删除</span>
                 </template>
-            </el-table-column>
+            </el-table-column> -->
 
         </el-table>
         <div class="pagination-container">
@@ -116,7 +117,7 @@
 import moment from 'moment'
 import { getList, addList, delList } from '@/api/customer'
 export default {
-    name: 'assetManagement',
+    name: 'customer_list',
     data () {
         return {
             curPage: 1,
@@ -211,7 +212,8 @@ export default {
                                     console.log('成功的数据', res)
                                     this.newAddassets_show = false
                                     this.getInfo();
-                                }
+                                } else {
+                                    this.$message.error(data.Message);                                }
                             })
                             .catch(error => {
                                 reject(error);

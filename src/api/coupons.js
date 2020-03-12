@@ -28,3 +28,10 @@ export function editCoupons (data) {
         data
     })
 }
+// 静态卡券
+export function GetTTicketAll () {
+    return request({
+        url: '/api/Ticket/GetTTicketAll',
+        method: 'post',
+    })
+}

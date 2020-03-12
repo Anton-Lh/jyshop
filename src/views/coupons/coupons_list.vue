@@ -2,7 +2,6 @@
     <div class="containerPublic assetManagement">
         <div class="form-block">
             <!-- v-model.trim 自动过滤前后空格 -->
-
             <span>名称:</span>
             <el-input class="input-width"
                       v-model="search.name"></el-input>
@@ -29,11 +28,11 @@
             <el-form :model="ruleForm"
                      :rules="rules"
                      ref="ruleForm"
-                     height="40px"
                      label-width="100px"
                      class="demo-ruleForm ">
 
                 <el-form-item label="名称"
+                              class="couponstype"
                               prop="ticket_name">
                     <el-input placeholder="价格就是名称,例：300"
                               v-model.trim="ruleForm.ticket_name"></el-input>
@@ -42,6 +41,7 @@
                               class="couponstype"
                               prop="goods_ids">
                     <el-select v-model="ruleForm.goods_ids"
+                               filterable
                                multiple
                                @change="handeltype"
                                style="width: 250px;"
@@ -129,7 +129,6 @@ import { resolve, reject } from 'q';
 
 export default {
     name: 'coupons_list',
-
     data () {
         return {
             curPage: 1,
@@ -198,7 +197,6 @@ export default {
             return new Promise((resolve, reject) => {
                 getCoupons(params).then(res => {
                     const data = res.data;
-                    console.log(data)
                     if (data.Result) {
                         this.tableData = res.data.Data;
                         this.total = res.data.PageInfo.TotalCount;
@@ -234,7 +232,6 @@ export default {
             // this.rowData = {};
             // this.rowData = row;
             const res = await tikcetGoods({ id: row.id })
-            console.log(res)
             if (res.data.Result) {
                 this.rowData = row
                 let data = res.data.Data
@@ -248,12 +245,9 @@ export default {
                 //  goods_ids
                 this.newAddassets_show = true
             }
-            // tikcetGoods({id:row.id}).then(res=>{
-            //     console.log(res)
-            // })
+
         },
         del (index, row) {
-            console.log(row.id)
             this.$confirm('此操作将永久删除, 是否继续?', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
@@ -487,8 +481,10 @@ export default {
   max-height: 300px;
   overflow: auto;
 }
-.couponstype {
-  height: 41px;
-  overflow-y: auto;
+/deep/.couponstype {
+  .el-form-item__content {
+    height: 41px;
+    overflow-x: hidden;
+  }
 }
 </style>

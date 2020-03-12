@@ -21,3 +21,10 @@ export function delList (data) {
         data
     })
 }
+// 静态客户
+export function GetTCustomerNameAll () {
+    return request({
+        url: 'api/Customer/GetTCustomerNameAll',
+        method: 'post',
+    })
+}

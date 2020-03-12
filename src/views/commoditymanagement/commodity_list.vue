@@ -12,6 +12,7 @@
                     </el-col>
                     <el-col :span="3">
                         <el-select v-model="search.select_status"
+                                   filterable
                                    clearable
                                    placeholder="商品状态">
                             <el-option v-for="item in status_type"
@@ -63,6 +64,7 @@
                 <el-form-item label="商品状态"
                               prop="goods_status">
                     <el-select v-model="ruleForm.goods_status"
+                               filterable
                                placeholder="请选择商品状态">
                         <el-option v-for="item in status_type"
                                    :key="item.value"
@@ -70,6 +72,23 @@
                                    :value="item.value">
                         </el-option>
                     </el-select>
+                </el-form-item>
+                <el-form-item label="商品首页">
+                    <div :class="limitNum == 1 ? 'imgBox' : limitNum == 2 ? 'imgBox2' : ''">
+                        <el-upload class="avatar-uploader"
+                                   :action="uploadUrl_2"
+                                   list-type="picture-card"
+                                   :limit="0"
+                                   :file-list="fileList_2"
+                                   :on-success="handleAvatarSuccess_2"
+                                   :on-preview="handlePictureCardPreview_2"
+                                   :before-upload="beforeAvatarUpload"
+                                   :on-remove="handleRemove_2">
+                            <i class="el-icon-plus"></i>
+                        </el-upload>
+                    </div>
+                    <span class="txt_style">(建议尺寸250*250)</span>
+
                 </el-form-item>
                 <el-form-item label="商品轮播">
                     <div class="imgBox2">
@@ -84,12 +103,12 @@
                                    :on-remove="handleRemove">
                             <i class="el-icon-plus"></i>
                         </el-upload>
-                        <span>最多上传6张(建议尺寸325*325)</span>
+                        <span>最多上传6张(建议尺寸750*750)</span>
 
                     </div>
                 </el-form-item>
                 <el-form-item label="简介:"
-                              style="width: 100%;padding-top: 20px;"
+                              style="width: 100%;padding-top: 40px;"
                               prop="goods_introduce">
 
                     <div class="quill_content">
@@ -135,9 +154,6 @@
             </el-table-column>
             <el-table-column prop="stock_number"
                              label="商品数量">
-            </el-table-column>
-            <el-table-column prop="password"
-                             label="商品简介">
             </el-table-column>
             <el-table-column label="商品状态">
                 <template slot-scope="scope">
@@ -191,10 +207,12 @@ export default {
             total: 0,
             status_type: [{ value: 0, label: '下架' }, { value: 1, label: '上架' }],
             dialogTitle: '',
+            limitNum: 1,
             dialogType: 0,
             tableData: [],
             dialogImageUrl: '',
             fileList: [],
+            fileList_2: [],
             quillOption: quillConfig,
             dialogVisible: false,
             ruleForm: {
@@ -203,10 +221,13 @@ export default {
                 goods_introduce: '',
                 stock_number: 0,
                 goods_status: '',
-                goods_poll_img: ''
+                goods_poll_img: '',
+                goods_img: ''
             },
             alreadyFileList: [],
             uploadUrl: process.env.BASE_API + "/api/Goods/PollPicture",
+            uploadUrl_2: process.env.BASE_API + "/api/Goods/Picture",
+            dialogVisible2: false,
             rules: {
                 goods_name: [
                     { required: true, message: '请输入商品名称', trigger: 'blur' }
@@ -293,7 +314,6 @@ export default {
             this.$refs['ruleForm'].validate((valid) => {
                 if (valid) {
                     let postData = this.ruleForm
-                    console.log('添加的', postData)
                     return new Promise((resolve, reject) => {
                         addApi(postData).then(res => {
                             const data = res.data
@@ -321,9 +341,15 @@ export default {
             _obj = JSON.parse(JSON.stringify(row))
             console.log(_obj)
             this.ruleForm = _obj
+            if (_obj.goods_img != "" && _obj.goods_img) {
+                this.fileList_2.push({
+                    name: _obj.goods_img,
+                    url: process.env.BASE_API + _obj.goods_img
+                })
+            }
             var poll = this.ruleForm.goods_poll_img.split(";")
             for (var i = 0; i < poll.length; i++) {
-                console.log(poll[i])
+                // console.log('图片', poll[i])
                 if (poll != "") {
                     this.fileList.push({ name: poll[i], url: process.env.BASE_API + poll[i] })
                     this.alreadyFileList.push({ name: poll[i], uid: poll[i], path: poll[i] })
@@ -336,7 +362,7 @@ export default {
                 if (valid) {
                     this.ruleForm.goods_poll_img = this.getPollImg();
                     var postData = this.ruleForm
-                    console.log('编辑的', postData)
+                    // console.log('编辑的', postData)
                     return new Promise((resolve, reject) => {
                         updateApi(postData).then(res => {
                             const data = res.data
@@ -399,6 +425,7 @@ export default {
             this.$refs.ruleForm.resetFields();
             this.newAddassets_show = false
             this.fileList = []
+            this.fileList_2 = []
             this.alreadyFileList = []
             this.ruleForm = {
                 goods_name: '',
@@ -406,10 +433,23 @@ export default {
                 goods_introduce: '',
                 stock_number: 0,
                 goods_status: '',
-                goods_poll_img: ''
+                goods_poll_img: '',
+                goods_img: ''
             }
         },
+        handleRemove_2 (file, fileList) {
+            this.ruleForm.goods_img = ''
+            console.log(file, fileList);
+        },
+        handlePictureCardPreview_2 (file) {
+
+        },
         // 上传图片
+        handleAvatarSuccess_2 (res, file) {
+            this.ruleForm.goods_img = file.response.file_path;
+            this.dialogVisible_2 = true;
+            // console.log('文件', file.response.file_path)
+        },
         handleAvatarSuccess (res, file) {
             var result = JSON.stringify(res)
             this.alreadyFileList.push({ name: '', uid: file.uid, path: result });
@@ -420,7 +460,7 @@ export default {
             const isPNG = file.type === 'image/png';
             const isLt5M = file.size / 1024 / 1024 < 5;
             if (!isJPG && !isPNG) {
-                this.$message.error('请上传JPG格式图片!');
+                this.$message.error('请上传JPGhuo格式图片!');
             }
             if (!isLt5M) {
                 this.$message.error('上传图片大小不能超过 5MB!');
@@ -638,7 +678,7 @@ export default {
 
 // 富文本
 .quill_content {
-  width: 670px;
+  max-width: 670px;
 }
 /deep/.ql-snow .ql-picker {
   height: 100%;
@@ -661,5 +701,29 @@ export default {
   /deep/ s {
     text-decoration: line-through;
   }
+}
+
+.imgBox {
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+}
+.avatar-uploader-sm {
+  /deep/.el-upload--picture-card {
+    width: 80px;
+    height: 80px;
+    line-height: 90px;
+  }
+  /deep/.el-upload-list--picture-card {
+    /deep/.el-upload-list__item {
+      width: 80px;
+      height: 80px;
+    }
+  }
+}
+.txt_style {
+  text-align: left;
+  width: 100%;
+  display: inline-block;
 }
 </style>
